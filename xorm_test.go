@@ -29,6 +29,7 @@ var (
 func createEngine(dbType, connStr string) error {
 	if testEngine == nil {
 		var err error
+		fmt.Println("connect to", dbType, connStr)
 		testEngine, err = NewEngine(dbType, connStr)
 		if err != nil {
 			return err
@@ -58,7 +59,7 @@ func TestMain(m *testing.M) {
 
 	dbType = *db
 	if *db == "sqlite3" {
-		if ptrConnStr == nil {
+		if ptrConnStr == nil || *ptrConnStr == "" {
 			connString = "./test.db"
 		} else {
 			connString = *ptrConnStr
