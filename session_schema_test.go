@@ -119,6 +119,31 @@ func TestSyncTable(t *testing.T) {
 	assert.EqualValues(t, "sync_table1", tables[0].Name)
 }
 
+func TestSyncTable2(t *testing.T) {
+	assert.NoError(t, prepareEngine())
+
+	assert.NoError(t, testEngine.Table("sync_tablex").Sync2(new(SyncTable1)))
+
+	tables, err := testEngine.DBMetas()
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(tables))
+	assert.EqualValues(t, "sync_tablex", tables[0].Name)
+	assert.EqualValues(t, 3, len(tables[0].Columns()))
+
+	type SyncTable4 struct {
+		SyncTable1 `xorm:"extends"`
+		NewCol     string
+	}
+
+	assert.NoError(t, testEngine.Table("sync_tablex").Sync2(new(SyncTable4)))
+	tables, err = testEngine.DBMetas()
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, len(tables))
+	assert.EqualValues(t, "sync_tablex", tables[0].Name)
+	assert.EqualValues(t, 4, len(tables[0].Columns()))
+	assert.EqualValues(t, colMapper.Obj2Table("NewCol"), tables[0].Columns()[3].Name)
+}
+
 func TestIsTableExist(t *testing.T) {
 	assert.NoError(t, prepareEngine())
 
@@ -306,4 +331,17 @@ func TestSync2_2(t *testing.T) {
 	for _, table := range tables {
 		assert.True(t, tableNames[table.Name])
 	}
+}
+
+func TestSync2_Default(t *testing.T) {
+	type TestSync2Default struct {
+		Id       int64
+		UserId   int64  `xorm:"default(1)"`
+		IsMember bool   `xorm:"default(true)"`
+		Name     string `xorm:"default('my_name')"`
+	}
+
+	assert.NoError(t, prepareEngine())
+	assertSync(t, new(TestSync2Default))
+	assert.NoError(t, testEngine.Sync2(new(TestSync2Default)))
 }
